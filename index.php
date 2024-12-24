@@ -63,6 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['discount_product'])) 
     }
 }
 
+// Handle product addition
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addition_product'])) {
+    $product_id = (int)$_POST['product_id'];
+    $addition_quantity = (int)$_POST['addition_quantity'];
+
+    // Update product quantity
+    try {
+        $stmt = $pdo->prepare("UPDATE products SET quantity = quantity + ? WHERE id = ? AND quantity >= ?");
+        $stmt->execute([$addition_quantity, $product_id, $addition_quantity]);
+        if ($stmt->rowCount() === 0) {
+            $error = 'Error: Cantidad insuficiente o producto invalido.';
+        } else {
+            header('Location: index.php'); // Refresh the page after the update
+            exit;
+        }
+    } catch (Exception $e) {
+        $error = 'Error updating product: ' . $e->getMessage();
+    }
+}
+
 // Handle product update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_product'])) {
     $product_id = (int)$_POST['product_id'];
@@ -139,7 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
         <!-- Admin Actions -->
         <div class="search-bar-container mb-4">
             <button class="btn btn-success add-product-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">Agregar Producto</button>
-            <button class="btn btn-primary discount-product-btn" data-bs-toggle="modal" data-bs-target="#discountProductModal">Descontar Producto</button>
+            <button class="btn btn-primary addition-product-btn" data-bs-toggle="modal" data-bs-target="#additionProductModal">Sumar Producto</button>
+            <button class="btn btn-warning discount-product-btn" data-bs-toggle="modal" data-bs-target="#discountProductModal">Descontar Producto</button>
             <div class="search-bar">
                 <input type="text" id="searchBar" class="form-control" placeholder="Buscar producto...">
             </div>
@@ -334,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <input type="text" id="searchProductModal" class="form-control" placeholder="Busca un producto...">
+                            <input type="text" id="searchAdditionProductModal" class="form-control" placeholder="Busca un producto...">
                         </div>
                         <div class="mb-3">
                             <label for="product_id" class="form-label">Selecciona un producto</label>
@@ -355,6 +376,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                         <button type="submit" name="discount_product" class="btn btn-primary">Descontar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Addition Product Modal -->
+    <div class="modal fade" id="additionProductModal" tabindex="-1" aria-labelledby="additionProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="additionProductModalLabel">Sumar Cantidad</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <input type="text" id="searchProductModal" class="form-control" placeholder="Busca un producto...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="product_id" class="form-label">Selecciona un producto</label>
+                            <select name="product_id" id="product_id" class="form-select" required>
+                                <option value="" disabled selected>Selecciona un producto...</option>
+                                <?php foreach ($products as $product): ?>
+                                    <option value="<?= $product['id']; ?>" class="product-option" data-code="<?= htmlspecialchars($product['code']); ?>">
+                                        <?= htmlspecialchars($product['name']) . ' (Cantidad: ' . $product['quantity'] . ')'; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="discount_quantity" class="form-label">Cantidad a sumar</label>
+                            <input type="number" name="addition_quantity" id="addition_quantity" class="form-control" min="1" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" name="addition_product" class="btn btn-primary">Agregar</button>
                     </div>
                 </form>
             </div>
@@ -405,6 +464,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
         searchProductModal.addEventListener('input', function () {
             const searchValue = searchProductModal.value.toLowerCase().trim();
             productOptions.forEach(option => {
+                const productName = option.textContent.toLowerCase();
+                const productCode = option.getAttribute('data-code').toLowerCase();
+                if (productName.includes(searchValue) || productCode.includes(searchValue)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+
+        const searchAdditionProductModal = document.getElementById('searchAdditionProductModal');
+        const productAdditionOptions = document.querySelectorAll('#product_id .product-option');
+
+        searchAdditionProductModal.addEventListener('input', function () {
+            const searchValue = searchAdditionProductModal.value.toLowerCase().trim();
+            productAdditionOptions.forEach(option => {
                 const productName = option.textContent.toLowerCase();
                 const productCode = option.getAttribute('data-code').toLowerCase();
                 if (productName.includes(searchValue) || productCode.includes(searchValue)) {
