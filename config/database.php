@@ -1,6 +1,6 @@
 <?php
 $host = '127.0.0.1';
-$db = 'inventory_system_mj';
+$db = 'inventory_system';
 $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';
