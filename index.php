@@ -70,10 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['addition_product'])) 
 
     // Update product quantity
     try {
-        $stmt = $pdo->prepare("UPDATE products SET quantity = quantity + ? WHERE id = ? AND quantity >= ?");
-        $stmt->execute([$addition_quantity, $product_id, $addition_quantity]);
+        // Remove the quantity >= ? condition
+        $stmt = $pdo->prepare("UPDATE products SET quantity = quantity + ? WHERE id = ?");
+        $stmt->execute([$addition_quantity, $product_id]);
         if ($stmt->rowCount() === 0) {
-            $error = 'Error: Cantidad insuficiente o producto invalido.';
+            $error = 'Error: Producto no válido.';
         } else {
             header('Location: index.php'); // Refresh the page after the update
             exit;
@@ -125,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manejo de Inventario</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="storage/img/MJ.png">
+    <link rel="icon" type="image/png" href="">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="app/styles/app.css">
 </head>
@@ -134,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand">
-                <img src="storage/img/MJ.png" alt="Logo" style="height: 50px;"> Sistema de Inventario
+                <img src="" alt="Logo" style="height: 50px;"> Sistema de Inventario
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -247,7 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
                         </div>
                         <div class="mb-3">
                             <label for="quantity" class="form-label">Cantidad</label>
-                            <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
+                            <input type="number" name="quantity" id="quantity" class="form-control" min="0" required>
                         </div>
                         <div class="mb-3">
                             <label for="price_no_tax" class="form-label">Costo</label>
@@ -296,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
                         </div>
                         <div class="mb-3">
                             <label for="updateQuantity" class="form-label">Cantidad</label>
-                            <input type="number" name="quantity" id="updateQuantity" class="form-control" min="1" required>
+                            <input type="number" name="quantity" id="updateQuantity" class="form-control" min="0" required>
                         </div>
                         <div class="mb-3">
                             <label for="updatePriceNoTax" class="form-label">Costo</label>
